@@ -178,7 +178,30 @@ const PRESET_PLANS = {
 };
 
 const LEVEL_ORDER = ["Beginner","Intermediate","Advanced"];
-const RECOVERY_EXS = [{n:"Foam Rolling",s:1,r:"5–10 min",bp:"Core"},{n:"Full-Body Stretching",s:1,r:"5–10 min",bp:"Core"}];
+const RECOVERY_EXS = [
+  {n:"Foam Rolling",s:1,r:"5–10 min",bp:"Core"},
+  {n:"Full-Body Stretching",s:1,r:"5–10 min",bp:"Core"},
+];
+
+const STRETCH_BY_DAY = {
+  0: { label:"Upper body stretch", search:"upper body stretching routine after workout" },
+  1: { label:"Full body stretch", search:"full body stretching routine 10 minutes" },
+  2: { label:"Leg & glute stretch", search:"leg day stretching routine quad hamstring glute stretch" },
+  3: { label:"Chest & back stretch", search:"chest back shoulder stretching routine after workout" },
+  4: { label:"Cardio cooldown stretch", search:"cardio cooldown stretching routine 10 minutes" },
+  5: { label:"Active recovery stretch", search:"active recovery stretching routine full body" },
+  6: { label:"Glute & hamstring stretch", search:"glute hamstring leg day stretching routine" },
+};
+
+const WARMUP_BY_DAY = {
+  0: { label:"Upper body warmup", search:"upper body warmup routine before workout" },
+  1: { label:"Full body warmup", search:"full body warmup routine 5 minutes" },
+  2: { label:"Leg day warmup", search:"leg day warmup routine dynamic stretching" },
+  3: { label:"Chest back warmup", search:"chest back warmup routine before workout" },
+  4: { label:"Cardio warmup", search:"cardio warmup routine dynamic stretching" },
+  5: { label:"Light movement warmup", search:"gentle warmup routine active recovery" },
+  6: { label:"Leg day warmup", search:"glute leg warmup routine gym before workout" },
+};
 const FULL_DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const DAY_ABB   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MOTIVATION = ["Every rep is a vote for who you're becoming. 🔥","Strong is a skill — you're practising it right now. 💪","Consistency beats intensity. Show up. ⚡","You're one workout away from a good mood. 🌟","Progress is progress — even slow. 💎","Stronger than yesterday. That's the only goal. 🚀","Don't think. Just start. The rest follows. 🎯"];
@@ -784,8 +807,16 @@ function TodayPage({data,setLog,streak,onShare}){
         <div style={{flex:1}}>
           <div className="sora" style={{fontSize:20,fontWeight:800,display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             {dayPlan.emoji} {dayPlan.focus}
-            {streak>0&&isToday&&<div style={{display:"flex",alignItems:"center",gap:3,background:"#FF450015",border:"1px solid #FF450040",borderRadius:10,padding:"3px 10px",fontSize:12,fontWeight:700,color:C.accent}}>🔥 {streak}d</div>}
-          </div>
+{streak>0&&isToday&&(
+  <div style={{display:"flex",alignItems:"center",gap:6,background:streak>=30?"#FFD70015":streak>=7?"#FF450020":"#FF450015",border:`2px solid ${streak>=30?"#FFD700":streak>=7?"#FF4500":"#FF450040"}`,borderRadius:14,padding:"6px 14px",animation:streak>=7?"glow 2s ease-in-out infinite":"none",flexShrink:0}}>
+    <span style={{fontSize:streak>=14?22:18}}>{streak>=30?"👑":streak>=14?"💎":streak>=7?"⚡":"🔥"}</span>
+    <div>
+      <div style={{fontSize:streak>=7?16:14,fontWeight:900,color:streak>=30?"#FFD700":C.accent,lineHeight:1,fontFamily:"Sora,sans-serif"}}>{streak}d</div>
+      {streak>=7&&<div style={{fontSize:9,color:C.muted,fontWeight:700,letterSpacing:1,textTransform:"uppercase",lineHeight:1,marginTop:2}}>{streak>=30?"Legend":streak>=14?"Titan":"On fire"}</div>}
+    </div>
+  </div>
+)}
+         </div>
         </div>
         <Ring pct={pct} color={dayPlan.color} size={48} sw={4}/>
       </div>
@@ -797,6 +828,70 @@ function TodayPage({data,setLog,streak,onShare}){
     </div>
 
     <div style={{padding:"12px 20px"}}>
+     {/* Energy check-in */}
+{isToday&&(
+  <div style={{background:C.card,border:`1.5px solid ${C.border}`,borderRadius:14,padding:14,marginBottom:12}}>
+    <div style={{fontWeight:700,fontSize:14,marginBottom:10}}>How's your energy today?</div>
+    <div style={{display:"flex",gap:6}}>
+      {[{val:1,emoji:"😴",label:"Tired"},{val:2,emoji:"😕",label:"Low"},{val:3,emoji:"😊",label:"OK"},{val:4,emoji:"💪",label:"Good"},{val:5,emoji:"🔥",label:"Amazing"}].map(({val,emoji,label})=>(
+        <div key={val} onClick={()=>setLog(currentDate,{...log,energy:val})} style={{flex:1,textAlign:"center",padding:"10px 4px",borderRadius:12,border:`2px solid ${log.energy===val?C.accent:C.border}`,background:log.energy===val?C.accent+"18":"transparent",cursor:"pointer",transition:"all .2s"}}>
+          <div style={{fontSize:22}}>{emoji}</div>
+          <div style={{fontSize:10,color:log.energy===val?C.accent:C.muted,marginTop:3,fontWeight:log.energy===val?700:400}}>{label}</div>
+        </div>
+      ))}
+    </div>
+    {log.energy&&<div style={{marginTop:10,fontSize:12,color:C.subtle,textAlign:"center",lineHeight:1.5,padding:"8px 12px",background:"#ffffff08",borderRadius:10}}>
+      {log.energy<=2?"Take it easy today — lighter session still counts. 🌿":log.energy===3?"Solid. Focus on form and consistency. 💫":"You're ready. Push harder today. 🔥"}
+    </div>}
+  </div>
+)}
+
+{/* Water tracker */}
+<div style={{background:C.card,border:`1.5px solid #1C2440`,borderRadius:14,padding:14,marginBottom:12}}>
+  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+    <div>
+      <div style={{fontWeight:700,fontSize:14}}>💧 Water intake</div>
+      <div style={{fontSize:11,color:C.muted,marginTop:2}}>Target: 8 glasses</div>
+    </div>
+    <div style={{fontSize:16,fontWeight:800,color:(log.water||0)>=8?"#34D399":"#3D9EFF"}}>{log.water||0} / 8</div>
+  </div>
+  <div style={{height:6,background:"#1C2440",borderRadius:6,overflow:"hidden",marginBottom:12}}>
+    <div style={{height:"100%",width:`${Math.min(100,((log.water||0)/8)*100)}%`,background:`linear-gradient(90deg,#3D9EFF,#34D399)`,borderRadius:6,transition:"width .4s cubic-bezier(.4,0,.2,1)"}}/>
+  </div>
+  <div style={{display:"flex",gap:8}}>
+    <button onClick={()=>setLog(currentDate,{...log,water:Math.max(0,(log.water||0)-1)})} style={{width:40,height:40,borderRadius:10,background:"#1C2440",border:"none",color:C.subtle,fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+    <div style={{flex:1,display:"flex",gap:4,alignItems:"center"}}>
+      {Array.from({length:8},(_,i)=>(
+        <div key={i} onClick={()=>setLog(currentDate,{...log,water:i+1})} style={{flex:1,height:28,borderRadius:6,background:i<(log.water||0)?"#3D9EFF":"#1C2440",cursor:"pointer",transition:"background .2s",border:`1px solid ${i<(log.water||0)?"#3D9EFF":"#2A3560"}`}}/>
+      ))}
+    </div>
+    <button onClick={()=>setLog(currentDate,{...log,water:Math.min(8,(log.water||0)+1)})} style={{width:40,height:40,borderRadius:10,background:"#3D9EFF22",border:"1px solid #3D9EFF40",color:"#3D9EFF",fontSize:22,cursor:"pointer",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+  </div>
+  {(log.water||0)>=8&&<div style={{marginTop:10,textAlign:"center",fontSize:12,color:"#34D399",fontWeight:700}}>✓ Hydration goal reached! 🎉</div>}
+</div>
+
+{/* Rest day tips */}
+{dayPlan.type==="rest"&&(
+  <div style={{marginBottom:12}}>
+    <div style={{fontSize:11,color:C.muted,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}}>Today's Recovery Focus</div>
+    {[
+      {icon:"🧘",title:"Stretch for 10 minutes",tip:"Even light stretching speeds up muscle repair and reduces next-day soreness."},
+      {icon:"💧",title:"Drink more water than usual",tip:"Your muscles are repairing today. Hydration is when the real recovery happens."},
+      {icon:"😴",title:"Prioritise sleep tonight",tip:"80% of muscle growth happens during sleep. Aim for 8 hours."},
+      {icon:"🚶",title:"Light walk if you feel restless",tip:"A 20-minute walk boosts blood flow without adding fatigue."},
+    ].map(({icon,title,tip},i)=>(
+      <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"14px",marginBottom:8,display:"flex",gap:12,alignItems:"flex-start"}}>
+        <span style={{fontSize:24,flexShrink:0}}>{icon}</span>
+        <div>
+          <div style={{fontWeight:700,fontSize:13,color:C.text,marginBottom:4}}>{title}</div>
+          <div style={{fontSize:12,color:C.subtle,lineHeight:1.6}}>{tip}</div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+{/* Streak upgrade */}
       {dayPlan.note&&<div style={{background:`${dayPlan.color}12`,border:`1px solid ${dayPlan.color}30`,borderRadius:12,padding:"10px 14px",marginBottom:12,fontSize:13,color:C.subtle,lineHeight:1.55}}>💡 {dayPlan.note}</div>}
 
       {isPicOne&&<>
@@ -847,7 +942,37 @@ function TodayPage({data,setLog,streak,onShare}){
       </>}
 
       <div style={{fontSize:11,color:C.muted,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginTop:14,marginBottom:10}}>Recovery (Every Day)</div>
-      {RECOVERY_EXS.map((ex,ri)=>{const i=(dayPlan.exs?.length||0)+ri;const done=!!log[`done_${i}`];return(<div key={ri} style={{background:done?C.card2+"AA":C.card,border:`1.5px solid ${C.border}`,borderRadius:14,marginBottom:7,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}><div onClick={()=>toggle(i)} style={{width:26,height:26,borderRadius:8,border:`2px solid ${done?"transparent":"#4A5580"}`,background:done?"#34D399":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .2s",flexShrink:0}}>{done&&<span style={{color:"#fff",fontSize:12,fontWeight:800}}>✓</span>}</div><div style={{flex:1}}><div style={{fontWeight:600,fontSize:14,color:done?C.muted:C.text,textDecoration:done?"line-through":"none"}}>{ex.n}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{ex.r}</div></div></div>);})}
+
+{/* Warmup + Stretch video links for the day */}
+<div style={{display:"flex",gap:8,marginBottom:10}}>
+  {[WARMUP_BY_DAY[dow], STRETCH_BY_DAY[dow]].map((item,i)=>(
+    <div key={i} onClick={()=>window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(item.search)}`,"_blank")}
+      style={{flex:1,background:C.card,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"10px 12px",cursor:"pointer",display:"flex",gap:8,alignItems:"center"}}>
+      <div style={{width:28,height:28,background:"#FF0000CC",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <span style={{color:"#fff",fontSize:11,marginLeft:2}}>▶</span>
+      </div>
+      <div>
+        <div style={{fontSize:11,fontWeight:700,color:C.text,lineHeight:1.3}}>{i===0?"Today's warmup":"Today's stretch"}</div>
+        <div style={{fontSize:10,color:C.muted,marginTop:1}}>{item.label}</div>
+      </div>
+    </div>
+  ))}
+</div>
+
+{RECOVERY_EXS.map((ex,ri)=>{
+  const i=(dayPlan.exs?.length||0)+ri;const done=!!log[`done_${i}`];
+  return(
+    <div key={ri} style={{background:done?C.card2+"AA":C.card,border:`1.5px solid ${C.border}`,borderRadius:14,marginBottom:7,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
+      <div onClick={()=>toggle(i)} style={{width:26,height:26,borderRadius:8,border:`2px solid ${done?"transparent":"#4A5580"}`,background:done?"#34D399":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .2s",flexShrink:0}}>
+        {done&&<span style={{color:"#fff",fontSize:12,fontWeight:800}}>✓</span>}
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:600,fontSize:14,color:done?C.muted:C.text,textDecoration:done?"line-through":"none"}}>{ex.n}</div>
+        <div style={{fontSize:12,color:C.muted,marginTop:2}}>{ex.r}</div>
+      </div>
+    </div>
+  );
+})} const i=(dayPlan.exs?.length||0)+ri;const done=!!log[`done_${i}`];return(<div key={ri} style={{background:done?C.card2+"AA":C.card,border:`1.5px solid ${C.border}`,borderRadius:14,marginBottom:7,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}><div onClick={()=>toggle(i)} style={{width:26,height:26,borderRadius:8,border:`2px solid ${done?"transparent":"#4A5580"}`,background:done?"#34D399":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .2s",flexShrink:0}}>{done&&<span style={{color:"#fff",fontSize:12,fontWeight:800}}>✓</span>}</div><div style={{flex:1}}><div style={{fontWeight:600,fontSize:14,color:done?C.muted:C.text,textDecoration:done?"line-through":"none"}}>{ex.n}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{ex.r}</div></div></div>);})}
 
       <div style={{background:C.card,border:`1.5px solid ${C.border}`,borderRadius:14,padding:14,marginTop:14}}>
         <div style={{fontSize:11,color:C.muted,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>📝 Session Notes</div>
@@ -1105,7 +1230,7 @@ export default function App(){
         {page===4&&<SettingsPage data={data} setProfile={setProfile} addStrength={addStrength} saveTargets={saveTargets} user={user} signOut={signOut} onShare={()=>setShowShare(true)}/>}
       </div>
 
-      <div style={{background:C.bg,borderTop:`1px solid ${C.border}`,padding:"6px 0 14px",display:"flex",flexShrink:0}}>
+      <div style={{background:C.bg,borderTop:`1px solid ${C.border}`,padding:"6px 0 14px",display:"flex",flexShrink:0,position:"sticky",bottom:0,zIndex:50,width:"100%"}}>
         {NAV.map(({icon,label},i)=><button key={i} onClick={()=>setPage(i)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"transparent",border:"none",cursor:"pointer",padding:"6px 0"}}><span style={{fontSize:19,filter:page===i?"none":"grayscale(100%) opacity(50%)",transition:"all .2s"}}>{icon}</span><span style={{fontSize:10,fontWeight:page===i?700:400,color:page===i?C.accent:C.muted,fontFamily:"DM Sans,sans-serif",transition:"color .2s"}}>{label}</span>{page===i&&<div style={{width:16,height:2,background:C.accent,borderRadius:2}}/>}</button>)}
       </div>
     </div>
